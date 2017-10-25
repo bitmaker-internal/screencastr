@@ -1,0 +1,20 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    multi_json (1.12.2)
+    streamio-ffmpeg (3.0.2)
+      multi_json (~> 1.8)
+    thor (0.20.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  streamio-ffmpeg
+  thor
+
+RUBY VERSION
+   ruby 2.4.1p111
+
+BUNDLED WITH
+   1.14.6
