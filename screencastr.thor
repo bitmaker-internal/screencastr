@@ -2,6 +2,8 @@ require 'thor'
 require 'streamio-ffmpeg'
 require 'pry'
 
+require_relative 'helpers/file_helpers'
+
 class Screencastr < Thor
   # Flow
   # 1. Open video
@@ -26,9 +28,6 @@ class Screencastr < Thor
   desc "transcode VIDEO_PATH", "Transcode video file to mp4 format"
   def transcode(video_path)
     video = FFMPEG::Movie.new(video_path)
-    path_array = video_path.split('/')
-    filename = path_array.pop.split('.').first
-    path = path_array.join('/')
-    video.transcode("#{path}/#{filename}.mp4")
+    video.transcode(FileHelpers.out_path(video_path))
   end
 end
