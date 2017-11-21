@@ -23,6 +23,13 @@ class Screencastr < Thor
   desc "add_watermark VIDEO_PATH", "Add watermark to video"
   def add_watermark(video_path)
     video = FFMPEG::Movie.new(video_path)
+
+    options = {
+      watermark: "assets/160-GA-Bitmaker-Glyph-Black.png", resolution: video.resolution,
+      watermark_filter: { position: "RB", padding_x: 30, padding_y: 30 }
+    }
+
+    video.transcode(FileHelpers.out_path(video_path), options)
   end
 
   desc "transcode VIDEO_PATH", "Transcode video file to mp4 format"
