@@ -25,13 +25,13 @@ class Screencastr < Thor
     ext = File.extname(out_file)[1..-1]
 
     `ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
-    -loop 1 -i assets/1080-GA-Splash.png -f #{ext} -t 5 -r 30 -pix_fmt yuv420p \
+    -loop 1 -i assets/1080-GA-Splash.png -f #{ext} -t 5 -r #{options[:framerate] || 30} -pix_fmt yuv420p \
     -vf scale=#{options[:resolution] || "1920x1080"} -map 0:a -map 1:v bumper.#{ext}`
 
     # Can't use invoke, because Thor won't allow the same task to be invoked twice
-    s = Screencastr.new
-    s.options = options
     begin
+      s = Screencastr.new
+      s.options = options
       s.concat("bumper.#{ext}", in_file, "bumper-tmp.#{ext}")
       s.concat("bumper-tmp.#{ext}", "bumper.#{ext}", out_file)
     ensure
