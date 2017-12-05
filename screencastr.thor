@@ -58,8 +58,11 @@ class Screencastr < Thor
     video = FFMPEG::Movie.new(in_file)
 
     ffmpeg_options = {
-      resolution: "#{options[:width]}x#{options[:height]}",
-      frame_rate: options[:framerate]
+      frame_rate: options[:framerate],
+      custom: [
+        "-vf",
+        "scale=#{options[:width]}:#{options[:height]}:force_original_aspect_ratio=decrease,pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2"
+      ]
     }
 
     video.transcode(out_file, ffmpeg_options)
