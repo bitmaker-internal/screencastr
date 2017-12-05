@@ -71,8 +71,8 @@ class Screencastr < Thor
   desc "concat FIRST_IN SECOND_IN OUT_FILE", "Concatenate two video files together"
   def concat(first_in, second_in, out_file)
     `ffmpeg -i #{first_in} -i #{second_in} \
-    -filter_complex '[0:v] scale=#{options[:width]}x#{options[:height]} [vs0]; \
-    [1:v] scale=#{options[:width]}x#{options[:height]} [vs1]; \
+    -filter_complex '[0:v] scale=#{options[:width]}:#{options[:height]}:force_original_aspect_ratio=decrease,pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2 [vs0]; \
+    [1:v] scale=#{options[:width]}:#{options[:height]}:force_original_aspect_ratio=decrease,pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2 [vs1]; \
     [vs0][0:a][vs1][1:a] concat=n=2:v=1:a=1 [vout][aout]' \
     -r #{options[:framerate]} \
     -map '[vout]' -map '[aout]' #{out_file}`
