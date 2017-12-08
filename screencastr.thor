@@ -22,20 +22,13 @@ class Screencastr < Thor
   def add_bumpers(in_file, out_file)
     ext = File.extname(out_file)[1..-1] # extension without the dot
 
-    `ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
-    -loop 1 -i assets/1080-GA-Splash.png -f #{ext} -t 5 -r #{options[:framerate]} -pix_fmt yuv420p \
-    -vf scale=#{options[:width]}x#{options[:height]} -map 0:a -map 1:v bumper.#{ext}`
-
-    # Can't use invoke, because Thor won't allow the same task to be invoked twice
-    begin
-      s = Screencastr.new
-      s.options = options
-      s.concat("bumper.#{ext}", in_file, "bumper-tmp.#{ext}")
-      s.concat("bumper-tmp.#{ext}", "bumper.#{ext}", out_file)
-    ensure
-      File.delete("bumper.#{ext}") if File.exists?("bumper.#{ext}")
-      File.delete("bumper-tmp.#{ext}") if File.exists?("bumper-tmp.#{ext}")
+    unless File.exist?("bumper.#{ext}")
+      `ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+      -loop 1 -i assets/1080-GA-Splash.png -f #{ext} -t 5 -r #{options[:framerate]} -pix_fmt yuv420p \
+      -vf scale=#{options[:width]}x#{options[:height]} -map 0:a -map 1:v bumper.#{ext}`
     end
+
+    invoke :concat, ["bumper.#{ext}", in_file, "bumper.#{ext}", out_file]
   end
 
   desc "add_watermark IN_FILE OUT_FILE", "Add watermark to video"
@@ -54,16 +47,27 @@ class Screencastr < Thor
     pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2' #{out_file}`
   end
 
-  desc "concat FIRST_IN SECOND_IN OUT_FILE", "Concatenate two video files together"
-  def concat(first_in, second_in, out_file)
-    `ffmpeg -i #{first_in} -i #{second_in} \
-    -filter_complex '[0:v] scale=#{options[:width]}:#{options[:height]}:force_original_aspect_ratio=decrease,\
-    pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2 [vs0]; \
-    [1:v] scale=#{options[:width]}:#{options[:height]}:force_original_aspect_ratio=decrease,\
-    pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2 [vs1]; \
-    [vs0][0:a][vs1][1:a] concat=n=2:v=1:a=1 [vout][aout]' \
-    -r #{options[:framerate]} \
-    -map '[vout]' -map '[aout]' #{out_file}`
+  desc "concat FIRST_IN SECOND_IN ... NTH_IN OUT_FILE", "Concatenate an arbitrary number of files together"
+  def concat(*in_files, out_file)
+    if in_files.length <= 1
+      puts "concat requires at least 2 inputs"
+      exit
+    end
+
+    inputs = []
+    scale_filters = []
+    streams = []
+
+    in_files.each_with_index do |in_file, index|
+      inputs << "-i #{in_file}"
+      scale_filters << "[#{index}:v] scale=#{options[:width]}:#{options[:height]}:force_original_aspect_ratio=decrease,\
+      pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2 [vs#{index}];"
+      streams << "[vs#{index}][#{index}:a]"
+    end
+
+    `ffmpeg #{inputs.join(" ")} -filter_complex '#{scale_filters.join(" ")}\
+    #{streams.join} concat=n=#{streams.length}:v=1:a=1 [vout][aout]' \
+    -r #{options[:framerate]} -map '[vout]' -map '[aout]' #{out_file}`
   end
 
   desc "brand IN_FILE OUT_FILE", "Transcode, watermark, and add bumpers, all in one command"
