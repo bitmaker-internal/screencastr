@@ -1,5 +1,6 @@
 require 'thor'
 require 'pry'
+require 'aws-sdk-s3'
 
 require_relative 'helpers/file_helpers'
 
@@ -71,13 +72,36 @@ class Screencastr < Thor
   end
 
   desc "brand IN_FILE OUT_FILE", "Transcode, watermark, and add bumpers, all in one command"
+  method_option :upload, aliases: "-u", desc: "Upload the file to S3. Will prompt for file path. Default: false", type: :boolean
   def brand(in_file, out_file)
+    if options[:upload]
+      s3_path = ask "Enter a filepath and filename for the S3 upload:"
+    end
+
     ext = File.extname(out_file)[1..-1]
-    invoke :add_watermark, [in_file, "watermarked.#{ext}"]
+    invoke :add_watermark, [in_file, "watermarked.#{ext}"], options.reject{ |k| k == "upload" }
     begin
-      invoke :add_bumpers, ["watermarked.#{ext}", out_file]
+      invoke :add_bumpers, ["watermarked.#{ext}", out_file], options.reject{ |k| k == "upload" }
     ensure
       File.delete("watermarked.#{ext}") if File.exists?("watermarked.#{ext}")
     end
+
+    if options[:upload]
+      invoke :upload, [out_file, s3_path], options.reject{ |k| k == "upload" }
+    end
+  end
+
+  desc "upload IN_FILE OUT_FILE", "Upload a video to S3"
+  def upload(in_file, out_file)
+    s3 = Aws::S3::Resource.new
+    obj = s3.bucket(ENV['BITMAKER_S3_BUCKET'] || 'bitmakerhq').object(out_file)
+    obj.upload_file(in_file, {
+      acl: 'public-read',
+      content_type: 'video/mp4'
+    })
+
+    puts "=================================="
+    puts "File uploaded to #{obj.public_url}"
+    puts "=================================="
   end
 end
