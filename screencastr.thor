@@ -75,7 +75,8 @@ class Screencastr < Thor
   method_option :upload, aliases: "-u", desc: "Upload the file to S3. Will prompt for file path. Default: false", type: :boolean
   def brand(in_file, out_file)
     if options[:upload]
-      s3_path = ask "Enter a filepath and filename for the S3 upload:"
+      cohort_path = ask "Enter the course and cohort path for the S3 upload (e.g. web-development/2017-12-team-wall-e):"
+      destination = "#{cohort_path}/#{File.basename(out_file)}"
     end
 
     ext = File.extname(out_file)[1..-1]
@@ -87,14 +88,15 @@ class Screencastr < Thor
     end
 
     if options[:upload]
-      invoke :upload, [out_file, s3_path], options.reject{ |k| k == "upload" }
+      invoke :upload, [out_file, destination], options.reject{ |k| k == "upload" }
     end
   end
 
-  desc "upload IN_FILE OUT_FILE", "Upload a video to S3"
-  def upload(in_file, out_file)
+  desc "upload IN_FILE DESTINATION", "Upload a video to S3. DESTINATION should be a course/cohort path and a filename (eg. web-development/2017-12-team-wall-e/w1d1-git-github.mp4)"
+  def upload(in_file, destination)
     s3 = Aws::S3::Resource.new
-    obj = s3.bucket(ENV['BITMAKER_S3_BUCKET'] || 'bitmakerhq').object(out_file)
+    s3_destination = "lessons/#{destination}"
+    obj = s3.bucket(ENV['BITMAKER_S3_BUCKET'] || 'bitmakerhq').object(s3_destination)
     obj.upload_file(in_file, {
       acl: 'public-read',
       content_type: 'video/mp4'
