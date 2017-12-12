@@ -4,21 +4,25 @@ This is a Thor task that uses [`ffmpeg`](https://www.ffmpeg.org/) to transcode s
 
 Ideally this task will kick off automatically when a new video file is dropped into a watched folder.
 
-This project uses the [`streamio-ffmpeg`](https://github.com/streamio/streamio-ffmpeg) Ruby gem which wraps the ffmpeg library.
-
 ## Prerequisites
 
 You'll need to install the following cli tools on the system that you're running this task on:
 
-- ffmpeg (`brew install ffmpeg`)
++ ffmpeg (`brew install ffmpeg`)
 
+You'll also need to configure the following environment variables:
+
++ `AWS_ACCESS_KEY_ID` : Your access key ID for AWS
++ `AWS_SECRET_ACCESS_KEY` : Your secret access key for AWS
++ `AWS_REGION` : The AWS region, should probably be `us-east-1`
++ `BITMAKER_S3_BUCKET` : Optional, otherwise the bucket is set to `bitmakerhq`
 
 ## Transcoding Flow
 
 The process will be something like the following when done:
 
 1. Open video
-2. Transcode video down to preset settings (Fast 1080p30 in Handbrake)
+2. Transcode video down to preset settings
 3. Add watermark to video
 4. Encode bumper to same settings as video
   - Optionally, only if bumper video doesn't already exist on file system
