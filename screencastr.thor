@@ -26,7 +26,7 @@ class Screencastr < Thor
     unless File.exist?("bumper.#{ext}")
       `ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
       -loop 1 -i assets/1080-GA-Splash.png -f #{ext} -t 5 -r #{options[:framerate]} -pix_fmt yuv420p \
-      -vf scale=#{options[:width]}x#{options[:height]} -map 0:a -map 1:v bumper.#{ext}`
+      -vf 'scale=#{options[:width]}x#{options[:height]},setdar=16/9' -map 0:a -map 1:v bumper.#{ext}`
     end
 
     invoke :concat, ["bumper.#{ext}", in_file, "bumper.#{ext}", out_file]
@@ -36,7 +36,7 @@ class Screencastr < Thor
   def add_watermark(in_file, out_file)
     `ffmpeg -y -i #{in_file} -i assets/160-GA-Bitmaker-Glyph-Black.png \
     -filter_complex 'scale=#{options[:width]}:#{options[:height]}:force_original_aspect_ratio=decrease,\
-    pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2,\
+    pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2,setdar=16/9,\
     overlay=x=main_w-overlay_w-30:y=main_h-overlay_h-30' \
     -r #{options[:framerate]} #{out_file}`
   end
@@ -45,7 +45,7 @@ class Screencastr < Thor
   def transcode(in_file, out_file)
     `ffmpeg -y -i #{in_file} -r #{options[:framerate]} \
     -vf 'scale=#{options[:width]}:#{options[:height]}:force_original_aspect_ratio=decrease,\
-    pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2' #{out_file}`
+    pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2,setdar=16/9' #{out_file}`
   end
 
   desc "concat FIRST_IN SECOND_IN ... NTH_IN OUT_FILE", "Concatenate an arbitrary number of files together"
@@ -62,7 +62,7 @@ class Screencastr < Thor
     in_files.each_with_index do |in_file, index|
       inputs << "-i #{in_file}"
       scale_filters << "[#{index}:v] scale=#{options[:width]}:#{options[:height]}:force_original_aspect_ratio=decrease,\
-      pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2 [vs#{index}];"
+      pad=#{options[:width]}:#{options[:height]}:(ow-iw)/2:(oh-ih)/2,setdar=16/9 [vs#{index}];"
       streams << "[vs#{index}][#{index}:a]"
     end
 
