@@ -17,6 +17,14 @@ You'll also need to configure the following environment variables:
 + `AWS_REGION` : The AWS region, should probably be `us-east-1`
 + `BITMAKER_S3_BUCKET` : Optional, otherwise the bucket is set to `bitmakerhq`
 
+## Instructions/Commands
+
+Run `bundle install` to install the requirements.
+
+Screencastr uses Thor as a task runner. To see the commands available, run
+
+    thor -T
+
 ## Transcoding Flow
 
 The process will be something like the following when done:
