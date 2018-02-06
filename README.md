@@ -1,12 +1,12 @@
 # Screencastr
 
-This is a Thor task that uses [`ffmpeg`](https://www.ffmpeg.org/) to transcode screencasts and upload them to S3 automatically.
+This is a Thor CLI that uses [`ffmpeg`](https://www.ffmpeg.org/) to transcode screencasts and upload them to S3 automatically.
 
 Ideally this task will kick off automatically when a new video file is dropped into a watched folder.
 
 ## Prerequisites
 
-You'll need to install the following cli tools on the system that you're running this task on:
+You'll need to install the following CLI tools on the system that you're running this task on:
 
 + ffmpeg (`brew install ffmpeg`)
 
@@ -23,7 +23,41 @@ Run `bundle install` to install the requirements.
 
 Screencastr uses Thor as a task runner. To see the commands available, run
 
-    thor -T
+```
+thor -T
+```
+
+Screencastr is capable of transcoding video formats, watermarking videos, adding a branded intro/outro, concatenating two or more videos together, and uploading videos to S3.
+
+The more commonly useful commands are:
++ `thor screencastr:brand`
++ `thor screencastr:concat`
+
+## `thor screencastr:brand`
+
+Used to convert a video to typically a 1080p mp4 file, brand it with a watermark and intro/outro, and optionally upload it to S3.
+
+Run `thor screencastr:brand IN_FILE OUT_FILE`, where `IN_FILE` is the file you'd like to brand (as well as its filepath), and `OUT_FILE` is what you will save the output as. Screencastr will attempt to convert to whatever file extension is attached to `OUT_FILE`, but currently only mp4 has been tested. A typical use case, where we're branding/converting a file on the Desktop, and saving the new file to the Desktop, looks like this:
+
+```
+thor screencastr:brand ~/Desktop/example.mov ~/Desktop/example.mp4
+```
+
+If you add the `-u` flag to `brand`, the file will be uploaded to S3 as well. Screencastr will ask you for the course and cohort if you elect to upload the file this way, to determine where it should be saved on S3, and will spit out a URL at the end. Here's that same example as above, but with the upload flag:
+
+```
+thor screencastr:brand -u ~/Desktop/example.mov ~/Desktop/example.mp4
+```
+
+## `thor screencastr:concat`
+
+Used to combine two or more videos together into a single output video. When calling it, give it any number of input files, followed by an output file at the end. A typical use case where we're combining two videos on the Desktop into one output looks something like this:
+
+```
+thor screencastr:concat ~/Desktop/part1.mov ~/Desktop/part2.mov ~/Desktop/output.mp4
+```
+
+**Note** that `concat` does not brand the video or upload the video to S3. You can run `brand` after the fact for that.
 
 ## Transcoding Flow
 
