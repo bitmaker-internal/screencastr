@@ -3,6 +3,7 @@ require 'pry'
 require 'aws-sdk-s3'
 
 require_relative 'helpers/file_helpers'
+require_relative 'helpers/monitor'
 
 class Screencastr < Thor
   # Flow
@@ -75,7 +76,7 @@ class Screencastr < Thor
   method_option :upload, aliases: "-u", desc: "Upload the file to S3. Will prompt for file path. Default: false", type: :boolean
   def brand(in_file, out_file)
     if options[:upload]
-      cohort_path = ask "Enter the course and cohort path for the S3 upload (e.g. web-development/2017-12-team-wall-e):"
+      cohort_path = ask "Enter the course and cohort path for the S3 upload (e.g. lessons/web-development/2017-12-team-wall-e):"
       destination = "#{cohort_path}/#{File.basename(out_file)}"
     end
 
@@ -93,9 +94,8 @@ class Screencastr < Thor
   end
 
   desc "upload IN_FILE DESTINATION", "Upload a video to S3. DESTINATION should be a course/cohort path and a filename (eg. web-development/2017-12-team-wall-e/w1d1-git-github.mp4)"
-  def upload(in_file, destination)
+  def upload(in_file, s3_destination)
     s3 = Aws::S3::Resource.new
-    s3_destination = "lessons/#{destination}"
     obj = s3.bucket(ENV['BITMAKER_S3_BUCKET'] || 'bitmakerhq').object(s3_destination)
     obj.upload_file(in_file, {
       acl: 'public-read',
@@ -105,5 +105,10 @@ class Screencastr < Thor
     puts "=================================="
     puts "File uploaded to #{obj.public_url}"
     puts "=================================="
+  end
+
+  desc "monitor", "Monitors uploads/pending and triggers upload when new file is added"
+  def monitor
+    Monitor.new(self)
   end
 end
