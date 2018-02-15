@@ -1,6 +1,6 @@
 .DS_Store
 .ruby-version
 *.mp4
-uploads
 logs
+tmp
 bumper.mov
