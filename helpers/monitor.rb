@@ -1,9 +1,12 @@
+require 'logger'
 require 'listen'
 
 class Monitor
 
   def initialize(screencastr)
-    @screencastr = screencastr
+    @screencastr   = screencastr
+    @stdout_logger = Logger.new(STDOUT)
+    @file_logger   = Logger.new('logs/monitor.log')
     monitor
   end
 
@@ -11,7 +14,7 @@ class Monitor
 
   def monitor
     monitor_dir = "#{Dir.pwd}/uploads/pending"
-    puts "Monitoring #{monitor_dir}"
+    log "Monitoring #{monitor_dir}"
 
     listener = Listen.to(monitor_dir) do |modified, added, removed|
       brand_and_upload(added)    if added.any?
@@ -32,18 +35,18 @@ class Monitor
       new_file_name = file_basename + '.mp4'
       destination   = File.join([Dir.pwd, 'uploads', 'processing', new_file_name])
 
-      puts "I see #{file_path} coming in ..."
+      log "I see #{file_path} coming in ..."
 
       until `lsof | grep #{file_path}`.empty?
-        puts "Waiting #{file_path} for file to close ..."
+        log "Waiting #{file_path} for file to close ..."
         sleep 1
       end
 
-      puts "#{file_path} has finished writing and is closed."
+      log "#{file_path} has finished writing and is closed."
 
-      puts "Branding File"
-      puts "Source: #{file_path}"
-      puts "Destination: #{destination}"
+      log "Branding File"
+      log "Source: #{file_path}"
+      log "Destination: #{destination}"
 
       @screencastr.brand(file_path, destination)
 
@@ -55,23 +58,28 @@ class Monitor
     file_basename  = File.basename(file_path)
     s3_destination = File.join('to-be-filed', file_basename)
 
-    puts "Uploading File"
-    puts "Source: #{file_path}"
-    puts "Destination: #{s3_destination}"
+    log "Uploading File"
+    log "Source: #{file_path}"
+    log "Destination: #{s3_destination}"
 
     @screencastr.upload(file_path, s3_destination)
   end
 
   def modified_message(files)
-    puts "I just noticed that the following was removed:"
-    puts files
-    puts "But I'm not going to do anything about it."
+    log "I just noticed that the following was removed:"
+    log files
+    log "But I'm not going to do anything about it."
   end
 
   def removed_message(files)
-    puts "I just noticed that the following was removed:"
-    puts files
-    puts "But I'm not going to do anything about it."
+    log "I just noticed that the following was removed:"
+    log files
+    log "But I'm not going to do anything about it."
+  end
+
+  def log(msg)
+    @stdout_logger.info msg
+    @file_logger.info msg
   end
 
 end
