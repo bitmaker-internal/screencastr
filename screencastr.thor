@@ -93,7 +93,7 @@ class Screencastr < Thor
     end
   end
 
-  desc "upload IN_FILE DESTINATION", "Upload a video to S3. DESTINATION should be a course/cohort path and a filename (eg. web-development/2017-12-team-wall-e/w1d1-git-github.mp4)"
+  desc "upload IN_FILE DESTINATION", "Upload a video to S3. DESTINATION should be a lessons/course/cohort path and a filename (eg. lessons/web-development/2017-12-team-wall-e/w1d1-git-github.mp4)"
   def upload(in_file, s3_destination)
     s3 = Aws::S3::Resource.new
     obj = s3.bucket(ENV['BITMAKER_S3_BUCKET'] || 'bitmakerhq').object(s3_destination)
