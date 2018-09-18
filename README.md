@@ -29,11 +29,22 @@ thor -T
 
 Screencastr is capable of transcoding video formats, watermarking videos, adding a branded intro/outro, concatenating two or more videos together, and uploading videos to S3.
 
-The more commonly useful commands are:
-+ `thor screencastr:brand`
-+ `thor screencastr:concat`
+The more common workflow is:
++ `thor screencastr:concat` (optional; use if you have multiple pieces of video)
++ `thor screencastr:brand` (adds watermark, bumpers, etc.)
++ `thor screencastr:upload` (actually uploads the video)
 
-## `thor screencastr:brand`
+### `thor screencastr:concat`
+
+Used to combine two or more videos together into a single output video. When calling it, give it any number of input files, followed by an output file at the end. A typical use case where we're combining two videos on the Desktop into one output looks something like this:
+
+```
+thor screencastr:concat ~/Desktop/part1.mov ~/Desktop/part2.mov ~/Desktop/output.mp4
+```
+
+**Note** that `concat` does not brand the video or upload the video to S3. You can run `brand` after the fact for that.
+
+### `thor screencastr:brand`
 
 Used to convert a video to typically a 1080p mp4 file, brand it with a watermark and intro/outro, and optionally upload it to S3.
 
@@ -49,15 +60,13 @@ If you add the `-u` flag to `brand`, the file will be uploaded to S3 as well. Sc
 thor screencastr:brand -u ~/Desktop/example.mov ~/Desktop/example.mp4
 ```
 
-## `thor screencastr:concat`
+### `thor screencastr:upload`
 
-Used to combine two or more videos together into a single output video. When calling it, give it any number of input files, followed by an output file at the end. A typical use case where we're combining two videos on the Desktop into one output looks something like this:
+Used to upload a given video to AWS in a specific place. For example, for the August 2018 web dev cohort:
 
-```
-thor screencastr:concat ~/Desktop/part1.mov ~/Desktop/part2.mov ~/Desktop/output.mp4
-```
+    thor screencastr:upload path/to/video lessons/web-development/2018-08-team-bender/w1d1-os-and-git-fundamentals.mp4
 
-**Note** that `concat` does not brand the video or upload the video to S3. You can run `brand` after the fact for that.
+This will place the video in the given folder. Please specify the correct folder for your screencasts.
 
 ## Transcoding Flow
 
